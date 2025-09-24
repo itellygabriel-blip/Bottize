@@ -1,0 +1,5 @@
+{
+  "name": "AI-powered application",
+  "description": "An AI-powered application to automate the creation of compelling feature images for e-commerce marketplaces. Upload a product image, and the AI will analyze it, generate marketing concepts, create new lifestyle and usage images, and perform a quality check to ensure fidelity to the original product.",
+  "requestFramePermissions": []
+}
