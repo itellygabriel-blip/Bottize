@@ -186,48 +186,7 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
         responseData = JSON.parse(response.text);
         break;
       }
-      case 'generateVideo': {
-        const { prompt, imageData, aspectRatio } = payload;
-        const response = await ai.models.generateVideo({
-          prompt: prompt,
-          image: {
-            inlineData: {
-              data: imageData.base64,
-              mimeType: imageData.mimeType,
-            },
-          },
-          aspectRatio: aspectRatio,
-        });
-        responseData = response;
-        break;
-      }
-      case 'getVideosOperation': {
-        const { operation } = payload;
-        const response = await ai.operations.get(operation.name);
-        responseData = response;
-        break;
-      }
-      case 'generateVideo': {
-        const { prompt, imageData, aspectRatio } = payload;
-        const response = await ai.models.generateVideo({
-          prompt: prompt,
-          image: {
-            inlineData: {
-              data: imageData.base64,
-              mimeType: imageData.mimeType,
-            },
-          },
-          aspectRatio: aspectRatio,
-        });
-        responseData = response;
-        break;
-      }
-      case 'getVideosOperation': {
-        const { operation } = payload;
-        const response = await ai.operations.get(operation.name);
-        responseData = response;
-        break;
-      }
+
       case 'generateVideo': {
         const { prompt, imageData, aspectRatio } = payload;
         const response = await ai.models.generateVideo({
