@@ -4,7 +4,7 @@ import { StepIndicator } from './components/StepIndicator';
 import { ImageGenerationGrid } from './components/ImageGenerationGrid';
 // Fix: Removed unused import for AnalysisDisplay as it was causing an error.
 import { WorkflowState, ImageAnalysis, GeneratedImage, ImageData, ProductComponent, ScriptScene, UserContextItem, GeneratedVideo } from './types';
-import { analyzeImage, generateScript, createImage, reviewImage, regenerateImage, generateSingleScene, generatePhotoPrompts, generateVideo, getVideosOperation } from './services/geminiService';
+import { analyzeImage, generatePrompts, createImage, reviewImage, regenerateImage, generateSingleScene, generateVideo, getVideosOperation, downloadVideo } from './services/geminiService';
 import { ContextAndComponentEditor } from './components/ContextAndComponentEditor';
 import { ScriptEditor } from './components/ScriptEditor';
 import { LandingPage } from './components/LandingPage';
@@ -123,13 +123,14 @@ const App: React.FC = () => {
         setAspectRatio(selectedAspectRatio);
         setError(null);
         try {
+            const contextImages = contextItems.map(item => item.imageData);
             if (appMode === 'full') {
                 setWorkflowState(WorkflowState.GENERATING_SCRIPT);
-                const scriptScenes = await generateScript(analysis, sceneCount, contextItems);
+                const scriptScenes = await generatePrompts(analysis, sceneCount, contextImages);
                 setScript(scriptScenes);
                 setWorkflowState(WorkflowState.SCRIPT_APPROVAL);
             } else if (appMode === 'photos') {
-                const photoPrompts = await generatePhotoPrompts(analysis, sceneCount, contextItems);
+                const photoPrompts = await generatePrompts(analysis, sceneCount, contextImages);
                 setScript(photoPrompts);
                 await generateAndReviewImages(photoPrompts);
             }
@@ -188,7 +189,7 @@ const App: React.FC = () => {
                 : v
             ));
         }
-    }, [generatedImages, aspectRatio, setVideos]);
+    }, [generatedImages, aspectRatio, setVideos, generateVideo]);
     
     useEffect(() => {
         const videosToPoll = videos.filter(v => v.status === 'GENERATING' && v.operation && !v.operation.done);
@@ -204,9 +205,14 @@ const App: React.FC = () => {
                         if (updatedOperation.response) {
                             const downloadLink = updatedOperation.response?.generatedVideos?.[0]?.video?.uri;
                             if (downloadLink) {
-                                const response = await fetch(downloadLink);
-                                if (!response.ok) throw new Error(`Falha ao baixar o vídeo: ${response.statusText}`);
-                                const blob = await response.blob();
+                                const { base64, mimeType } = await downloadVideo(downloadLink);
+                                const byteCharacters = atob(base64);
+                                const byteNumbers = new Array(byteCharacters.length);
+                                for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                }
+                                const byteArray = new Uint8Array(byteNumbers);
+                                const blob = new Blob([byteArray], {type: mimeType});
                                 const blobUrl = URL.createObjectURL(blob);
                                 setVideos(prev => prev.map(v => v.id === video.id ? {
                                     ...v, status: 'COMPLETED', operation: updatedOperation,
@@ -231,7 +237,7 @@ const App: React.FC = () => {
         }, 10000); // Poll every 10 seconds
     
         return () => clearInterval(intervalId);
-    }, [videos, setVideos]);
+    }, [videos, setVideos, getVideosOperation, downloadVideo]);
 
     const handleUserApproveImage = (id: string) => setGeneratedImages(prev => prev.map(img => img.id === id ? { ...img, status: 'USER_APPROVED' } : img));
     const handleUserRejectImage = (id: string) => setGeneratedImages(prev => prev.map(img => img.id === id ? { ...img, status: 'USER_REJECTED' } : img));
@@ -259,7 +265,7 @@ const App: React.FC = () => {
             const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro desconhecido na regeneração.";
             setGeneratedImages(prev => prev.map(i => i.id === id ? { ...i, status: 'FAILED', errorMessage, imageData: imageToRegen.previousImageData || null } : i));
         }
-    }, [originalImage, analysis, generatedImages, userContextItems]);
+    }, [originalImage, analysis, generatedImages, userContextItems, regenerateImage, reviewImage]);
 
     const handleRetryImageGeneration = useCallback(async (id: string) => {
         if (!originalImage || !analysis) return;
@@ -317,7 +323,7 @@ const App: React.FC = () => {
         } finally {
             setIsAddingScene(false);
         }
-    }, [analysis, originalImage, script, userContextItems]);
+    }, [analysis, originalImage, script, userContextItems, generateSingleScene, createImage, reviewImage]);
 
     const handleBack = useCallback(() => {
         setError(null);

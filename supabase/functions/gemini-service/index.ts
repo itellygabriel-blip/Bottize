@@ -161,7 +161,7 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
             ...(contextImages || []).flatMap(img => [{ text: "Context Image for scale reference:" }, { inlineData: { data: img.base64, mimeType: img.mimeType } }])
         ];
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image-preview',
             contents: { parts },
             config: { responseModalities: [Modality.IMAGE, Modality.TEXT] }
         });
@@ -184,6 +184,186 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
         ];
         const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: { parts }, config: { responseMimeType: 'application/json', responseSchema: reviewSchema } });
         responseData = JSON.parse(response.text);
+        break;
+      }
+      case 'generateVideo': {
+        const { prompt, imageData, aspectRatio } = payload;
+        const response = await ai.models.generateVideo({
+          prompt: prompt,
+          image: {
+            inlineData: {
+              data: imageData.base64,
+              mimeType: imageData.mimeType,
+            },
+          },
+          aspectRatio: aspectRatio,
+        });
+        responseData = response;
+        break;
+      }
+      case 'getVideosOperation': {
+        const { operation } = payload;
+        const response = await ai.operations.get(operation.name);
+        responseData = response;
+        break;
+      }
+      case 'generateVideo': {
+        const { prompt, imageData, aspectRatio } = payload;
+        const response = await ai.models.generateVideo({
+          prompt: prompt,
+          image: {
+            inlineData: {
+              data: imageData.base64,
+              mimeType: imageData.mimeType,
+            },
+          },
+          aspectRatio: aspectRatio,
+        });
+        responseData = response;
+        break;
+      }
+      case 'getVideosOperation': {
+        const { operation } = payload;
+        const response = await ai.operations.get(operation.name);
+        responseData = response;
+        break;
+      }
+      case 'generateVideo': {
+        const { prompt, imageData, aspectRatio } = payload;
+        const response = await ai.models.generateVideo({
+          prompt: prompt,
+          image: {
+            inlineData: {
+              data: imageData.base64,
+              mimeType: imageData.mimeType,
+            },
+          },
+          aspectRatio: aspectRatio,
+        });
+        responseData = response;
+        break;
+      }
+      case 'getVideosOperation': {
+        const { operation } = payload;
+        const response = await ai.operations.get(operation.name);
+        responseData = response;
+        break;
+      }
+      case 'generateSingleScene': {
+        const { analysis, script, userContextItems } = payload;
+        const contextImages = userContextItems.map(item => item.imageData);
+        const contextPrompts = (contextImages || []).map(item => {
+            return `- Tipo: ${getContextTypeName(item.type)}\n  - Nome/Título: ${item.name || 'N/A'}\n  - Descrição Fornecida pelo Usuário: ${item.description}`;
+        }).join('\n');
+
+        const contextInstruction = `
+INSTRUÇÃO CRÍTICA SOBRE CONTEXTO: O usuário forneceu as seguintes imagens de contexto com descrições.
+Use estas imagens APENAS como referência visual para os detalhes específicos descritos (peças, escala, uso, detalhes).
+NÃO copie o fundo, o estilo ou a cena inteira dessas imagens de referência. Sua tarefa é criar CENAS NOVAS E ORIGINAIS que incorporem o produto com fidelidade, usando o contexto apenas para acertar os detalhes.
+
+Contexto Fornecido:
+${contextPrompts || "Nenhum contexto visual adicional fornecido."}
+`;
+
+        const prompt = `
+            Sua tarefa é atuar como um diretor de criação e criar UMA ÚNICA cena nova para um roteiro de vídeo existente.
+            A nova cena deve ser uma continuação lógica do roteiro existente e seguir as mesmas regras.
+            O idioma de toda a sua saída deve ser Português do Brasil.
+
+            REGRAS DE CRIAÇÃO DA CENA:
+            1.  **Foco na Dor/Solução:** A cena deve resolver um 'ponto de dor' (pain point) do cliente ou destacar um benefício chave que ainda não foi abordado no roteiro.
+            2.  **Mostrar, não Contar:** A cena deve mostrar as funcionalidades do produto que resolvem aquela dor.
+            3.  **Prompt de Imagem Detalhado:** Forneça um prompt detalhado e criativo para uma IA de geração de imagem. O prompt deve descrever um cenário completo e visualmente atraente.
+            4.  **Requisitos do Prompt:** O prompt de imagem deve ser para uma imagem com proporção 1:1, ter um fundo ambiental e NÃO deve conter NENHUM texto.
+            5.  **Fidelidade do Produto:** A principal prioridade é garantir 100% de fidelidade à aparência do produto original e suas peças.
+            6.  **Segurança do Conteúdo:** O prompt de imagem gerado deve ser adequado para todos os públicos e não deve conter palavras ou conceitos que possam ser considerados sensíveis, violentos, ou que violem as políticas de IA responsável. Evite linguagem que possa ser interpretada de forma negativa.
+
+            ${contextInstruction}
+
+            Análise do Produto:
+            ${JSON.stringify(analysis, null, 2)}
+
+            Roteiro Existente:
+            ${JSON.stringify(script, null, 2)}
+
+            Agora, gere a nova cena como um objeto JSON seguindo o esquema especificado.
+        `;
+
+        const singleSceneSchema = {
+            type: Type.OBJECT,
+            properties: {
+                id: { type: Type.STRING, description: "Um identificador único para a cena, ex: 'cena-4'." },
+                sceneNumber: { type: Type.INTEGER, description: "O número sequencial da cena (ex: 4)" },
+                description: { type: Type.STRING, description: "Uma descrição curta e voltada para o usuário sobre o objetivo da cena, ligada a uma dor ou benefício." },
+                prompt: { type: Type.STRING, description: "Um prompt detalhado e criativo em Português para o modelo de geração de imagem." }
+            },
+            required: ["id", "sceneNumber", "description", "prompt"]
+        };
+
+        const parts = [{ text: prompt }];
+        for (const item of contextImages || []) {
+            if (item.imageData) {
+                const contextHeader = `Contexto Visual para '${item.name || getContextTypeName(item.type)}':`;
+                parts.push({ text: contextHeader });
+                parts.push({ inlineData: { data: item.imageData.base64, mimeType: item.imageData.mimeType } });
+            }
+        }
+        const contents = { parts };
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents,
+            config: { responseMimeType: 'application/json', responseSchema: singleSceneSchema }
+        });
+        responseData = JSON.parse(response.text);
+        break;
+      }
+      case 'regenerateImage': {
+        const { originalImage, previousImage, prompt, feedback, contextImages } = payload;
+        const fullPrompt = `
+Sua tarefa é REGENERAR uma imagem. A imagem anterior não foi satisfatória.
+Use o feedback fornecido para corrigir a imagem.
+
+**Feedback do Usuário:** ${feedback}
+
+**Descrição da Cena Original:** ${prompt}
+
+**REGRAS IMPORTANTES:**
+1.  **Fidelidade do Produto:** O produto na imagem final deve ser 100% idêntico ao produto na primeira imagem (a imagem original). Não altere sua forma, cor, textura ou quaisquer detalhes.
+2.  **Use o Contexto:** As imagens de contexto são referências visuais para escala, proporção e detalhes. Use-as para garantir que o produto seja retratado com precisão na nova cena.
+3.  **Não Copie Fundos de Referência:** NÃO copie as cenas ou fundos das imagens de referência. Crie uma cena nova e original com base na **Descrição da Cena Original** e no **Feedback do Usuário**.
+`;
+        const parts = [
+            { inlineData: { data: originalImage.base64, mimeType: originalImage.mimeType } },
+            { text: "Imagem anterior para referência:" },
+            { inlineData: { data: previousImage.base64, mimeType: previousImage.mimeType } },
+            { text: fullPrompt },
+            ...(contextImages || []).flatMap(img => [{ text: "Context Image for scale reference:" }, { inlineData: { data: img.base64, mimeType: img.mimeType } }])
+        ];
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts },
+            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] }
+        });
+        const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+        if (!imagePart || !imagePart.inlineData) throw new Error("Image regeneration failed.");
+        responseData = { base64: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType };
+        break;
+      }
+      case 'downloadVideo': {
+        const { url } = payload;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to download video: ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < buffer.byteLength; i++) {
+          binary += String.fromCharCode(buffer[i]);
+        }
+        const base64 = btoa(binary);
+        responseData = { base64, mimeType: response.headers.get('content-type') };
         break;
       }
       default:

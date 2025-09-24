@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import type { ImageAnalysis, ImageData, ProductComponent } from '../types';
+import type { ImageAnalysis, ImageData, ProductComponent, ScriptScene, UserContextItem } from '../types';
 
 async function invokeGeminiService(action: string, payload: any) {
   const { data, error } = await supabase.functions.invoke('gemini-service', {
@@ -21,8 +21,8 @@ export async function analyzeImage(imageData: ImageData): Promise<ImageAnalysis>
   return invokeGeminiService('analyzeImage', { imageData });
 }
 
-export async function generatePrompts(analysis: ImageAnalysis, contextImages?: ImageData[]): Promise<{ painPoint: string, prompt: string }[]> {
-  return invokeGeminiService('generatePrompts', { analysis, contextImages });
+export async function generatePrompts(analysis: ImageAnalysis, numberOfScenes: number, contextImages?: ImageData[]): Promise<{ painPoint: string, prompt: string }[]> {
+  return invokeGeminiService('generatePrompts', { analysis, numberOfScenes, contextImages });
 }
 
 export async function createImage(originalImage: ImageData, prompt: string, contextImages?: ImageData[]): Promise<ImageData> {
@@ -31,4 +31,24 @@ export async function createImage(originalImage: ImageData, prompt: string, cont
 
 export async function reviewImage(originalImage: ImageData, generatedImage: ImageData, components?: ProductComponent[], contextImages?: ImageData[]): Promise<{ isSimilar: boolean, reason:string }> {
   return invokeGeminiService('reviewImage', { originalImage, generatedImage, components, contextImages });
+}
+
+export async function downloadVideo(url: string): Promise<{ base64: string, mimeType: string }> {
+  return invokeGeminiService('downloadVideo', { url });
+}
+
+export async function regenerateImage(originalImage: ImageData, previousImage: ImageData, prompt: string, feedback: string, contextImages?: ImageData[]): Promise<ImageData> {
+  return invokeGeminiService('regenerateImage', { originalImage, previousImage, prompt, feedback, contextImages });
+}
+
+export async function generateSingleScene(analysis: ImageAnalysis, script: ScriptScene[], userContextItems: UserContextItem[]): Promise<ScriptScene> {
+  return invokeGeminiService('generateSingleScene', { analysis, script, userContextItems });
+}
+
+export async function generateVideo(prompt: string, imageData: ImageData, aspectRatio: '1:1' | '9:16' | '16:9'): Promise<any> {
+  return invokeGeminiService('generateVideo', { prompt, imageData, aspectRatio });
+}
+
+export async function getVideosOperation(operation: any): Promise<any> {
+  return invokeGeminiService('getVideosOperation', { operation });
 }
