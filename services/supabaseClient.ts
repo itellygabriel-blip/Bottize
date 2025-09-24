@@ -1,4 +1,4 @@
-import { createClient } from ' @supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 // É seguro expor estas variáveis no cliente, pois o acesso
 // aos dados é controlado pelas Row Level Security (RLS) policies do Supabase.
