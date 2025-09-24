@@ -216,21 +216,18 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
         break;
       }
 
-      case 'getVideosOperation': {
-        const { operation } = payload;
+case 'getVideosOperation': {
+  const { operationName } = payload; // Recebe o nome da operação
 
-        // Adiciona uma validação para garantir que o objeto de operação foi recebido.
-        if (!operation) {
-          throw new Error("O objeto da operação está ausente no payload.");
-        }
+  if (!operationName) {
+    throw new Error("O nome da operação está ausente no payload.");
+  }
 
-        // CORREÇÃO: Passe o objeto 'operation' inteiro para o método 'get'.
-        // A biblioteca SDK provavelmente espera o objeto completo que foi
-        // retornado pela chamada de 'generateVideos'.
-        const response = await ai.operations.get(operation);
-        responseData = response;
-        break;
-      }
+  // Passa a string do nome da operação para o método 'get'
+  const response = await ai.operations.get(operationName);
+  responseData = response;
+  break;
+}
       case 'generateSingleScene': {
         const { analysis, script, userContextItems } = payload;
         const contextImages = userContextItems.map(item => item.imageData);

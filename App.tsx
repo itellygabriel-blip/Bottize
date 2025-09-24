@@ -199,7 +199,8 @@ const App: React.FC = () => {
         const intervalId = setInterval(async () => {
             for (const video of videosToPoll) {
                 try {
-                    const updatedOperation = await getVideosOperation(video.operation);
+                    if (video.operation && video.operation.name) {
+            const updatedOperation = await getVideosOperation(video.operation.name);
     
                     if (updatedOperation.done) {
                         if (updatedOperation.response) {

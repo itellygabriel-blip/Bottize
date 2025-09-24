@@ -49,6 +49,6 @@ export async function generateVideo(prompt: string, imageData: ImageData, aspect
   return invokeGeminiService('generateVideo', { prompt, imageData, aspectRatio });
 }
 
-export async function getVideosOperation(operation: any): Promise<any> {
-  return invokeGeminiService('getVideosOperation', { operation });
+export async function getVideosOperation(operationName: string): Promise<any> {
+  return invokeGeminiService('getVideosOperation', { operationName });
 }
