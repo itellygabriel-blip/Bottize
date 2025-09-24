@@ -218,6 +218,7 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
 
       case 'getVideosOperation': {
         const { operation } = payload;
+        console.log("Received operation payload:", JSON.stringify(operation, null, 2));
 
         // Validação para garantir que o nome da operação existe
         if (!operation || !operation.name) {
