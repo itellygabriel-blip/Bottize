@@ -218,9 +218,16 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
 
       case 'getVideosOperation': {
         const { operation } = payload;
-        // A função correta para obter o status da operação de vídeo
-        const updatedOperation = await ai.operations.getVideosOperation({ operation: operation });
-        responseData = updatedOperation;
+
+        // Validação para garantir que o nome da operação existe
+        if (!operation || !operation.name) {
+          throw new Error("Payload da operação inválido ou nome da operação ausente.");
+        }
+
+        // CORREÇÃO: Usar o método genérico e mais estável 'get' com o nome da operação.
+        // Este é o padrão para consultar o status de long-running operations.
+        const response = await ai.operations.get(operation.name);
+        responseData = response;
         break;
       }
       case 'generateSingleScene': {
