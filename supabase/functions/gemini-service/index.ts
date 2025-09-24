@@ -218,16 +218,16 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
 
       case 'getVideosOperation': {
         const { operation } = payload;
-        console.log("Received operation payload:", JSON.stringify(operation, null, 2));
 
-        // Validação para garantir que o nome da operação existe
-        if (!operation || !operation.name) {
-          throw new Error("Payload da operação inválido ou nome da operação ausente.");
+        // Adiciona uma validação para garantir que o objeto de operação foi recebido.
+        if (!operation) {
+          throw new Error("O objeto da operação está ausente no payload.");
         }
 
-        // CORREÇÃO: Usar o método genérico e mais estável 'get' com o nome da operação.
-        // Este é o padrão para consultar o status de long-running operations.
-        const response = await ai.operations.get(operation.name);
+        // CORREÇÃO: Passe o objeto 'operation' inteiro para o método 'get'.
+        // A biblioteca SDK provavelmente espera o objeto completo que foi
+        // retornado pela chamada de 'generateVideos'.
+        const response = await ai.operations.get(operation);
         responseData = response;
         break;
       }
