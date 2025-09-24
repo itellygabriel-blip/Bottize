@@ -189,23 +189,38 @@ Pegue o produto principal da primeira imagem e coloque-o em uma cena completamen
 
       case 'generateVideo': {
         const { prompt, imageData, aspectRatio } = payload;
-        const response = await ai.models.generateVideo({
-          prompt: prompt,
-          image: {
-            inlineData: {
-              data: imageData.base64,
-              mimeType: imageData.mimeType,
-            },
-          },
-          aspectRatio: aspectRatio,
-        });
-        responseData = response;
+        const model = 'veo-2.0-generate-001'; // Modelo especificado
+
+        // Lógica de prompt dinâmico do código original
+        const finalPrompt = imageData
+            ? `Anime esta imagem de acordo com a seguinte instrução, criando um videoclipe de 3 a 5 segundos: "${prompt}"`
+            : `Crie um videoclipe de 3 a 5 segundos no estilo User-Generated Content (UGC) para uma cena de produto, baseado nesta instrução: "${prompt}"`;
+
+        // Monta o payload para a API, como no código original
+        const requestPayload = {
+            model,
+            prompt: finalPrompt,
+            image: imageData ? { 
+                imageBytes: imageData.base64, 
+                mimeType: imageData.mimeType 
+            } : undefined,
+            config: { 
+                numberOfVideos: 1,
+                aspectRatio: aspectRatio
+            }
+        };
+        
+        // A função correta a ser chamada, de acordo com o original
+        const operation = await ai.models.generateVideos(requestPayload);
+        responseData = operation;
         break;
       }
+
       case 'getVideosOperation': {
         const { operation } = payload;
-        const response = await ai.operations.get(operation.name);
-        responseData = response;
+        // A função correta para obter o status da operação de vídeo
+        const updatedOperation = await ai.operations.getVideosOperation({ operation: operation });
+        responseData = updatedOperation;
         break;
       }
       case 'generateSingleScene': {
