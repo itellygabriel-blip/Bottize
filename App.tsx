@@ -204,7 +204,7 @@ const App: React.FC = () => {
                         if (updatedOperation.response) {
                             const downloadLink = updatedOperation.response?.generatedVideos?.[0]?.video?.uri;
                             if (downloadLink) {
-                                const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+                                const response = await fetch(downloadLink);
                                 if (!response.ok) throw new Error(`Falha ao baixar o vídeo: ${response.statusText}`);
                                 const blob = await response.blob();
                                 const blobUrl = URL.createObjectURL(blob);
